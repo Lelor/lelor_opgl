@@ -23,5 +23,6 @@
     <None Include="res\shaders\Red.frag" />
     <None Include="res\shaders\Basic.vert" />
     <None Include="res\shaders\Blue.frag" />
+    <None Include="res\shaders\Basic.frag" />
   </ItemGroup>
 </Project>
