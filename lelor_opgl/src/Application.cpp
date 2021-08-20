@@ -6,58 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-
-
-std::string GetShaderCode(std::string path)
-{
-    std::ifstream shaderCode(path);
-    std::stringstream strBuffer;
-    strBuffer << shaderCode.rdbuf();
-    return strBuffer.str();
-}
-
-static unsigned int CompileShader(unsigned int type, const std::string& source)
-{
-    /* Get GLSL shader raw codeand load it into OpenGL compiler.
-       source can be any of the GLenum shader types */
-    unsigned int id = glCreateShader(type);
-    const char* src = &source[0];
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
-
-    int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-
-    if (result == GL_FALSE)
-    {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char*)_malloca(length * sizeof(char));
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "FAILED TO COMPILE SHADER" << std::endl;
-        std::cout << message << std::endl;
-        return 0;
-    }
-
-    return id;
-}
-
-
-static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
-{
-    unsigned int program = glCreateProgram();
-    unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-    return program;
-}
+#include "Shader.h"
 
 
 int main(void)
@@ -119,14 +68,13 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-    //unsigned int redShader = CreateShader(GetShaderCode("res/shaders/Basic.vert"), GetShaderCode("res/shaders/Red.frag"));
-    //unsigned int blueShader = CreateShader(GetShaderCode("res/shaders/Basic.vert"), GetShaderCode("res/shaders/Blue.frag"));
-    unsigned int genericShader = CreateShader(GetShaderCode("res/shaders/Basic.vert"), GetShaderCode("res/shaders/Basic.frag"));
-    glUseProgram(genericShader);
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    Shader myShader("res/shaders/Basic.vert", "res/shaders/Basic.frag");
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        float greenShade = (float)((sin(glfwGetTime()) / 2.0f) + 0.5f);
+        myShader.use();
+        myShader.setFloat4("uniColor", 0.0f, greenShade, 0.0f, 1.0f);
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
@@ -141,7 +89,6 @@ int main(void)
     
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
-    glDeleteProgram(genericShader);
     glfwTerminate();
     return 0;
 }
